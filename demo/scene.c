@@ -6,19 +6,18 @@
 
 #include "scene.h"
 
+////////////////////////////////////////////////////////////////////
 #define BACKGROUND_COLOR rgb(255, 255, 255)
-
 #define MAX_POLYGONS_NUMBER 150000
-
 #define MAX_LIGHT_SOURCES_NUMBER 5
-
 #define SERPINSKY_PYRAMID_LEVEL 5
+////////////////////////////////////////////////////////////////////
 
+// Описание функций
 void add_cube(Scene * scene,
               Point3d base,
               Float a,
               Material material);
-
 void add_serpinsky_pyramid(Scene * scene,
                            int depth,
                            Point3d p1,
@@ -27,7 +26,6 @@ void add_serpinsky_pyramid(Scene * scene,
                            Point3d p4,
                            Material material,
                            Color color);
-
 void add_pyramid(Scene * scene,
                  Point3d p1,
                  Point3d p2,
@@ -35,38 +33,26 @@ void add_pyramid(Scene * scene,
                  Point3d p4,
                  Material material,
                  Color color);
-
 void create_serpinsky_pyramid(Scene * scene);
-
 void create_cube(Scene * scene);
-
 void create_sphere(Scene * scene);
-
 void create_floor_with_texture(Scene * scene);
-
 void create_floor_without_texture(Scene * scene);
-
 void load_lamp(Scene * scene);
-
 void load_teapot(Scene * scene);
-
 void load_man(Scene * scene);
-
 void load_atenea(Scene * scene);
-
 void load_venus(Scene * scene);
-
 void load_elephant(Scene * scene);
-
 void load_car(Scene * scene);
-
 void load_minicooper(Scene * scene);
+void add_skybox(Scene * scene,
+                Point3d base,
+                Float a);
 
-void
-add_skybox(Scene * scene,
-           Point3d base,
-           Float a);
+////////////////////////////////////////////////////////////////////////////////////////////////
 
+// Создание сцены
 Scene * makeScene(void) {    
     Scene * scene = new_scene(MAX_POLYGONS_NUMBER, MAX_LIGHT_SOURCES_NUMBER, BACKGROUND_COLOR);
     

@@ -11,13 +11,13 @@
 #define PNG_DEBUG 3
 #include <png.h>
 
-#include <omp.h>
-
-#define IMG_CHUNK 10
-
-/* collapse is a feature from OpenMP 3 (2008) */
-#if _OPENMP < 200805
-    #define collapse(x)
+#ifdef WITH_OPENMP
+    #include <omp.h>
+    #define IMG_CHUNK 10
+    /* collapse is a feature from OpenMP 3 (2008) */
+    #if _OPENMP < 200805
+        #define collapse(x)
+    #endif
 #endif
 
 #include <math.h>
@@ -214,12 +214,13 @@ grayscale_canvas(Canvas * base,
     const int h = base->h;
     Canvas * ret = new_canvas(w, h);
     
-    omp_set_num_threads((num_threads < 2) ? 1 : num_threads);
-    
     int x;
     int y;
-    #pragma omp parallel private(x, y)
-    #pragma omp for collapse(2) schedule(dynamic, IMG_CHUNK)
+    #ifdef WITH_OPENMP
+        omp_set_num_threads((num_threads < 2) ? 1 : num_threads);
+        #pragma omp parallel private(x, y)
+        #pragma omp for collapse(2) schedule(dynamic, IMG_CHUNK)
+    #endif
     for(x = 0; x < w; ++x) {
         for(y = 0; y < h; ++y) {
             const Color c = get_pixel(x, y, base);
@@ -253,12 +254,13 @@ detect_edges_canvas(Canvas * base,
     const int h = base->h;
     Canvas * grad_canv = new_canvas(w, h);
     
-    omp_set_num_threads((num_threads < 2) ? 1 : num_threads);
-    
     int x;
     int y;
-    #pragma omp parallel private(x, y)
-    #pragma omp for collapse(2) schedule(dynamic, IMG_CHUNK)
+    #ifdef WITH_OPENMP
+        omp_set_num_threads((num_threads < 2) ? 1 : num_threads);
+        #pragma omp parallel private(x, y)
+        #pragma omp for collapse(2) schedule(dynamic, IMG_CHUNK)
+    #endif
     for(x = 1; x < w - 1; ++x) {
         for(y = 1; y < h - 1; ++y) {
             int i;

@@ -27,74 +27,64 @@
 #include <canvas.h>
 #include <render.h>
 
-#include <omp.h>
-/* collapse is a feature from OpenMP 3 (2008) */
-#if _OPENMP < 200805
-    #define collapse(x)
+#ifdef WITH_OPENMP
+    #include <omp.h>
+    /* collapse is a feature from OpenMP 3 (2008) */
+    #if _OPENMP < 200805
+        #define collapse(x)
+    #endif
+    #define CHUNK 50
 #endif
-#define CHUNK 50
 
 #include "scene.h"
 
+
+////////////////////////////////////////////////////////////
 #define DX 10
 #define DY 10
 #define DZ 10
 #define D_FOCUS 5
 #define D_ANGLE 0.05
-
 #define TEX_WIDTH  256
 #define TEX_HEIGHT 256
 
-Scene * scene = NULL;
-Camera * camera = NULL;
-Canvas * canv = NULL;
+Scene* scene = NULL;
+Camera* camera = NULL;
+Canvas* canv = NULL;
 
 Boolean camera_state_changed = False;
 
 int threads_num = 0;
 
-typedef
-struct {
+typedef struct {
     uint8_t r;
     uint8_t g;
     uint8_t b;
-}
-pixel_t;
+} pixel_t;
 
 GLint win_width = 512;
 GLint win_height = 512;
-
 GLuint tex;
 pixel_t canvas[TEX_WIDTH][TEX_HEIGHT];
 
-void
-processControls(int key,
-                int x,
-                int y);
 
-void
-processExit(unsigned char key,
-            int x,
-            int y);
+////////////////////////////////////////////////////////////
+void processControls(int key,
+                     int x,
+                     int y);
+void processExit(unsigned char key,
+                 int x,
+                 int y);
+void init_scene_and_camera(void);
+void glut_routines(void);
+void display(void);
+void animate(void);
+void render_seq(void);
+////////////////////////////////////////////////////////////
 
-void
-init_scene_and_camera(void);
 
-void
-glut_routines(void);
-
-void
-display(void);
-
-void
-animate(void);
-
-void
-render_seq(void);
-
-int
-main(int argc,
-     char *argv[]) {
+int main(int argc,
+         char *argv[]) {
     
     init_scene_and_camera();
     threads_num = (argc > 1) ? atoi(argv[1]) : 1;
@@ -106,9 +96,7 @@ main(int argc,
     return 0;
 }
 
-void
-init_scene_and_camera(void) {
-    
+void init_scene_and_camera(void) {
     scene = makeScene();
     
     Float focus = 200;
@@ -128,8 +116,7 @@ init_scene_and_camera(void) {
                       TEX_HEIGHT);
 }
 
-void
-glut_routines(void) {
+void glut_routines(void) {
     glutInitWindowSize(win_width, win_height);
     glutInitDisplayMode(GLUT_RGB | GLUT_SINGLE);
     
@@ -154,9 +141,7 @@ glut_routines(void) {
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, TEX_WIDTH, TEX_HEIGHT, 0, GL_RGB, GL_UNSIGNED_BYTE, canvas);
 }
 
-void
-animate(void) {
-    
+void animate(void) {
     render_seq();
     
     glEnable(GL_TEXTURE_2D);
@@ -165,9 +150,7 @@ animate(void) {
     glutPostRedisplay();
 }
 
-void
-render_seq(void) {
-    
+void render_seq(void) {
     if(camera_state_changed) {
         render_scene(scene,
                      camera,
@@ -181,9 +164,11 @@ render_seq(void) {
         
         /* Copying rendered image from Canvas * canv to pixel_t canvas[TEX_WIDTH][TEX_HEIGHT]*/
         // TODO: memcpy entire arrays
-        omp_set_num_threads(threads_num);
-        #pragma omp parallel private(i, j, px, c)
-        #pragma omp for collapse(2) schedule(dynamic, CHUNK)
+        #ifdef WITH_OPENMP
+            omp_set_num_threads(threads_num);
+            #pragma omp parallel private(i, j, px, c)
+            #pragma omp for collapse(2) schedule(dynamic, CHUNK)
+        #endif
         for (j = 0; j < TEX_HEIGHT; ++j) {
             for (i = 0; i < TEX_WIDTH; ++i) {
                 c = get_pixel(i, j, canv);
@@ -196,12 +181,11 @@ render_seq(void) {
     }
 }
 
-void
-display(void) {
-    
+void display(void) {
     glClear(GL_COLOR_BUFFER_BIT);
     glLoadIdentity();
     
+    // рисуем прямоугольник - API 1.1
     glEnable(GL_TEXTURE_2D);
     glBegin(GL_QUADS);
     glTexCoord2f(0.0, 0.0);
@@ -218,14 +202,9 @@ display(void) {
     glFlush();
 }
 
-void
-processControls(int key,
-                int x,
-                int y) {
-    
+void processControls(int key, int x, int y) {
     int modifiers = glutGetModifiers();
     switch(key) {
-            
 		case GLUT_KEY_UP :
             switch(modifiers) {
                 case GLUT_ACTIVE_CTRL :
@@ -306,11 +285,7 @@ processControls(int key,
 	}
 }
 
-void
-processExit(unsigned char key,
-            int x,
-            int y) {
-    
+void processExit(unsigned char key, int x, int y) {
     if (key == 27) {
         exit(0);
     }

@@ -1,6 +1,9 @@
-CC = gcc
+# CC = gcc
+CC = clang
 
 INCLUDES = $(addprefix -I, ./include)
+
+USE_OPEN_MP = 0
 
 ifeq ($(shell uname),Darwin)
   INCLUDES += -I/usr/X11/include
@@ -9,15 +12,24 @@ endif
 
 CFLAGS = $(DEF) -Wall
 CFLAGS += -std=gnu89 -O2
-#
 # http://www.insidepro.com/kk/231/231r.shtml
 # Boosting render performance a bit :)
 #CFLAGS += -O3 -ffast-math
+
+# OpenMP enable/disable
+ifeq ($(USE_OPEN_MP),1)
+	DEF = "$(DEF) -DWITH_OPENMP=1"
+	OPEN_MP_FLAG = "-fopenmp"
+else
+	OPEN_MP_FLAG = ""
+endif
 
 lib_dir = ./lib
 
 render_lib = $(lib_dir)/librender.a
 
+
+################################################
 $(lib_dir):
 	mkdir -p $@
 
@@ -25,7 +37,7 @@ $(lib_dir)/obj_loader.o: ./src/obj_loader.c ./include/obj_loader.h ./include/que
 	$(CC) $(CFLAGS) $(INCLUDES) -c ./src/obj_loader.c -o $@
 
 $(lib_dir)/canvas.o: ./src/canvas.c ./include/canvas.h ./include/color.h $(lib_dir)
-	$(CC) $(CFLAGS) $(INCLUDES) -fopenmp -c ./src/canvas.c -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPEN_MP_FLAG) -c ./src/canvas.c -o $@
 
 $(lib_dir)/scene.o: ./src/scene.c ./include/render.h ./include/color.h $(lib_dir)
 	$(CC) $(CFLAGS) $(INCLUDES) -c ./src/scene.c -o $@
@@ -37,7 +49,7 @@ $(lib_dir)/tracer.o: ./src/tracer.c ./include/render.h ./include/color.h $(lib_d
 	$(CC) $(CFLAGS) $(INCLUDES) -c ./src/tracer.c -o $@
 
 $(lib_dir)/render.o: ./src/render.c ./include/render.h ./include/color.h $(lib_dir)
-	$(CC) $(CFLAGS) $(INCLUDES) -fopenmp -c ./src/render.c -o $@
+	$(CC) $(CFLAGS) $(INCLUDES) $(OPEN_MP_FLAG) -c ./src/render.c -o $@
 
 $(lib_dir)/triangle.o: ./src/triangle.c ./include/render.h ./include/color.h $(lib_dir)
 	$(CC) $(CFLAGS) $(INCLUDES) -c ./src/triangle.c -o $@

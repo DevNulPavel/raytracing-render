@@ -7,13 +7,13 @@
 
 #define ANTIALIASING 1
 
-#include <omp.h>
-
-#define CHUNK 10
-
-/* collapse is a feature from OpenMP 3 (2008) */
-#if _OPENMP < 200805
-    #define collapse(x) 
+#ifdef WITH_OPENMP
+    #include <omp.h>
+    #define CHUNK 10
+    /* collapse is a feature from OpenMP 3 (2008) */
+    #if _OPENMP < 200805
+        #define collapse(x) 
+    #endif
 #endif
 
 #ifdef RAY_INTERSECTIONS_STAT
@@ -36,22 +36,26 @@ render_scene(const Scene * const scene,
     const Float dy = h / 2.0;
     const Float focus = camera->proj_plane_dist;
     
-    // TODO: consider possibility to define these OpenMP parameters
-    // in declarative style (using directives of preprocessor)
-    omp_set_num_threads((num_threads < 2) ? 1 : num_threads);
-    
-    #ifdef RAY_INTERSECTIONS_STAT
-    // intersections_per_ray is not atomic variable
-    // avoid multithreaded rendering to prevent from race-conditions
-    // in case of incrementing this variable
-    omp_set_num_threads(1);
-    intersections_per_ray = 0;
-    #endif // RAY_INTERSECTIONS_STAT
+    #ifdef WITH_OPENMP
+        // TODO: consider possibility to define these OpenMP parameters
+        // in declarative style (using directives of preprocessor)
+        omp_set_num_threads((num_threads < 2) ? 1 : num_threads);
+        
+        #ifdef RAY_INTERSECTIONS_STAT
+        // intersections_per_ray is not atomic variable
+        // avoid multithreaded rendering to prevent from race-conditions
+        // in case of incrementing this variable
+        omp_set_num_threads(1);
+        intersections_per_ray = 0;
+        #endif // RAY_INTERSECTIONS_STAT
+    #endif
     
     int i;
     int j;
-    #pragma omp parallel private(i, j)
-    #pragma omp for collapse(2) schedule(dynamic, CHUNK)
+    #ifdef WITH_OPENMP
+        #pragma omp parallel private(i, j)
+        #pragma omp for collapse(2) schedule(dynamic, CHUNK)
+    #endif
     for(i = 0; i < w; i++) {
         for(j = 0; j < h; j++) {
             const Float x = i - dx;
@@ -67,8 +71,10 @@ render_scene(const Scene * const scene,
     
     if(antialiasing) {
         Canvas * edges = detect_edges_canvas(canvas, num_threads);
-        #pragma omp parallel private(i, j)
-        #pragma omp for collapse(2) schedule(dynamic, CHUNK)
+        #ifdef WITH_OPENMP
+            #pragma omp parallel private(i, j)
+            #pragma omp for collapse(2) schedule(dynamic, CHUNK)
+        #endif
         for(i = 1; i < w - 1; i++) {
             for(j = 1; j < h - 1; j++) {
                 // edges canvas is grayscaled

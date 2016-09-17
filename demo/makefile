@@ -10,7 +10,7 @@ render = ../render/lib/librender.a
 CC_OPTS	 = -Wall
 CC_OPTS += -std=gnu89 -O2
 
-USE_OPEN_MP = 0
+USE_OPEN_MP = 1
 
 ifeq ($(shell uname), Darwin)
   OPEN_GL_OPTS = -framework GLUT -framework OpenGL -DDARWIN
@@ -25,8 +25,9 @@ endif
 
 # OpenMP enable/disable
 ifeq ($(USE_OPEN_MP),1)
-	DEF = "$(DEF) -DWITH_OPENMP=1"
-	OPEN_MP_FLAG = "-fopenmp"
+	CC = gcc-5
+	DEF += -DWITH_OPENMP=1
+	OPEN_MP_FLAG = -fopenmp
 else
 	OPEN_MP_FLAG = ""
 endif

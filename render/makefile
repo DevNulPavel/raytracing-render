@@ -3,7 +3,7 @@ CC = clang
 
 INCLUDES = $(addprefix -I, ./include)
 
-USE_OPEN_MP = 0
+USE_OPEN_MP = 1
 
 ifeq ($(shell uname),Darwin)
   INCLUDES += -I/usr/X11/include
@@ -18,8 +18,9 @@ CFLAGS += -std=gnu89 -O2
 
 # OpenMP enable/disable
 ifeq ($(USE_OPEN_MP),1)
-	DEF = "$(DEF) -DWITH_OPENMP=1"
-	OPEN_MP_FLAG = "-fopenmp"
+	CC = gcc-5
+	DEF += -DWITH_OPENMP=1
+	OPEN_MP_FLAG = -fopenmp
 else
 	OPEN_MP_FLAG = ""
 endif

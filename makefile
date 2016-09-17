@@ -2,10 +2,9 @@ LIBPATH	 = -Lrender/lib
 INCLUDES = -Irender/include
 LIBS = -lrender -lm -lpng
 
-USE_OPEN_MP = 0
+USE_OPEN_MP = 1
 
 # CC = gcc
-# CC_OPTS	 = -std=gnu89 -Wall -O2
 CC = clang
 CC_OPTS	= -std=gnu89 -Wall -O2
 
@@ -19,8 +18,9 @@ endif
 
 # OpenMP enable/disable
 ifeq ($(USE_OPEN_MP),1)
-	DEF = "$(DEF) -DWITH_OPENMP=1"
-	OPEN_MP_FLAG = "-fopenmp"
+	CC = gcc-5
+	DEF += -DWITH_OPENMP=1
+	OPEN_MP_FLAG = -fopenmp
 else
 	OPEN_MP_FLAG = ""
 endif
